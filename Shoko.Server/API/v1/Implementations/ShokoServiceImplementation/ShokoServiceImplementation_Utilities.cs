@@ -1555,7 +1555,7 @@ namespace Shoko.Server
         [HttpGet("AniDB/AVDumpFile/{vidLocalID}")]
         public string AVDumpFile(int vidLocalID)
         {
-            return AVDumpHelper.DumpFile(vidLocalID);
+            return AVDumpHelper.DumpFile(vidLocalID).FirstOrDefault();
         }
     }
 }

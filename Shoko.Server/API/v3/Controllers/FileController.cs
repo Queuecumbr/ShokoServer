@@ -219,12 +219,12 @@ namespace Shoko.Server.API.v3.Controllers
             var file = vl.GetBestVideoLocalPlace(true)?.FullServerPath;
             if (string.IsNullOrEmpty(file)) return this.NoContent();
             
-            var result = AVDumpHelper.DumpFile(file).Replace("\r", "");
+            var result = AVDumpHelper.DumpFile(file);
 
             return new AVDumpResult()
             {
-                FullOutput = result,
-                Ed2k = result.Split('\n').FirstOrDefault(s => s.Trim().Contains("ed2k://"))
+                FullOutput = string.Join("\n", result),
+                Ed2k = result.FirstOrDefault(),
             };
         }
 
