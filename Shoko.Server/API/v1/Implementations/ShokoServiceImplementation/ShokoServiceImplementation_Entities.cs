@@ -1034,7 +1034,9 @@ namespace Shoko.Server
         [HttpDelete("AniDB/MyList/{fileID}")]
         public void DeleteFileFromMyList(int fileID)
         {
-            CommandRequest_DeleteFileFromMyList cmd = new CommandRequest_DeleteFileFromMyList(fileID);
+            var vl = RepoFactory.VideoLocal.GetByMyListID(fileID);
+            if (vl == null) return;
+            var cmd = new CommandRequest_DeleteFileFromMyList(vl.Hash, vl.FileSize);
             cmd.Save();
         }
 
@@ -1043,7 +1045,7 @@ namespace Shoko.Server
         {
             try
             {
-                CommandRequest_AddFileToMyList cmdAddFile = new CommandRequest_AddFileToMyList(hash, false);
+                var cmdAddFile = new CommandRequest_AddFileToMyList(hash, false);
                 cmdAddFile.Save();
             }
             catch (Exception ex)
