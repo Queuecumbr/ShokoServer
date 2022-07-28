@@ -20,7 +20,7 @@ namespace Shoko.Server.Databases
     public class MySQL : BaseDatabase<MySqlConnection>, IDatabase
     {
         public string Name { get; } = "MySQL";
-        public int RequiredVersion { get; } = 96;
+        public int RequiredVersion { get; } = 97;
 
 
         private List<DatabaseCommand> createVersionTable = new List<DatabaseCommand>
@@ -641,6 +641,9 @@ namespace Shoko.Server.Databases
             new DatabaseCommand(95, 4, "UPDATE VideoLocal_User SET WatchedCount = 1, LastUpdated = WatchedDate WHERE WatchedDate IS NOT NULL;"),
             new DatabaseCommand(96, 1, "ALTER TABLE AnimeSeries_User ADD LastEpisodeUpdate datetime DEFAULT NULL;"),
             new DatabaseCommand(96, 2, DatabaseFixes.FixWatchDates),
+            new DatabaseCommand(97, 1, "ALTER TABLE `AniDB_File` DROP `File_AudioCodec`, DROP `File_VideoCodec`, DROP `File_VideoResolution`, DROP `File_FileExtension`, DROP `File_LengthSeconds`, DROP `Anime_GroupName`, DROP `Anime_GroupNameShort`, DROP `Episode_Rating`, DROP `Episode_Votes`, DROP `IsWatched`, DROP `WatchedDate`, DROP `CRC`, DROP `MD5`, DROP `SHA1`"),
+            new DatabaseCommand(97, 2, "ALTER TABLE `AniDB_File` MODIFY `IsCensored` bit NULL; ALTER TABLE `AniDB_File` MODIFY `IsDeprecated` bit not null; ALTER TABLE `AniDB_File` MODIFY `IsChaptered` bit not null"),
+            new DatabaseCommand(97, 3, "ALTER TABLE `AniDB_GroupStatus` MODIFY `Rating` decimal(3,3) NULL; UPDATE `AniDB_GroupStatus` SET `Rating` = `Rating` / 100 WHERE `Rating` > 10"),
         };
 
         private DatabaseCommand linuxTableVersionsFix = new DatabaseCommand("RENAME TABLE versions TO Versions;");
