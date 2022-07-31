@@ -59,16 +59,19 @@ namespace Shoko.Server.API.v3.Controllers
         /// <param name="filterID"><see cref="Filter"/> ID</param>
         /// <param name="pageSize">The page size. Set to <code>0</code> to disable pagination.</param>
         /// <param name="page">The page index.</param>
+        /// <param name="includeMissing">Include <see cref="Series"/> with missing <see cref="Episode"/>s in the search.</param>
+        /// <param name="randomImages">Randomise images shown for the <see cref="Group"/>.</param>
         /// <returns></returns>
         [HttpGet("Filter/{filterID}/Group")]
-        public ActionResult<ListResult<Group>> GetFilteredGroups([FromRoute] int filterID, [FromQuery] [Range(0, 100)] int pageSize = 50, [FromQuery] [Range(1, int.MaxValue)] int page = 1)
+        public ActionResult<ListResult<Group>> GetFilteredGroups([FromRoute] int filterID, [FromQuery] [Range(0, 100)] int pageSize = 50, [FromQuery] [Range(1, int.MaxValue)] int page = 1, [FromQuery] bool includeMissing = false, [FromQuery] bool randomImages = false)
         {
             // Return the top level groups with no filter.
             IEnumerable<SVR_AnimeGroup> groups;
             if (filterID == 0)
             {
+                var user = User;
                 groups = RepoFactory.AnimeGroup.GetAll()
-                    .Where(group => group.AnimeGroupParentID.HasValue && User.AllowedGroup(group))
+                    .Where(group => !group.AnimeGroupParentID.HasValue && user.AllowedGroup(group))
                     .OrderByName();
             }
             else
@@ -83,12 +86,18 @@ namespace Shoko.Server.API.v3.Controllers
 
                 groups = groupIds
                     .Select(group => RepoFactory.AnimeGroup.GetByID(group))
-                    .Where(group => group != null)
+                    .Where(group =>
+                    {
+                        if (group == null || group.AnimeGroupParentID.HasValue)
+                            return false;
+
+                        return includeMissing || group.GetAllSeries().Any(s => s.GetAnimeEpisodes().Any(e => e.GetVideoLocals().Count > 0));
+                    })
                     .OrderByGroupFilter(groupFilter);
             }
 
             return groups
-                .ToListResult(group => new Group(HttpContext, group), page, pageSize);
+                .ToListResult(group => new Group(HttpContext, group, randomImages), page, pageSize);
         }
 
         /// <summary>
@@ -97,13 +106,14 @@ namespace Shoko.Server.API.v3.Controllers
         /// <param name="filterID"><see cref="Filter"/> ID</param>
         /// <param name="groupID"><see cref="Group"/> ID</param>
         /// <param name="randomImages">Randomise images shown for the <see cref="Group"/>.</param>
+        /// <param name="includeMissing">Include <see cref="Series"/> with missing <see cref="Episode"/>s in the search.</param>
         /// <returns></returns>
         [HttpGet("Filter/{filterID}/Group/{groupID}/Group")]
-        public ActionResult<List<Group>> GetFilteredSubGroups([FromRoute] int filterID, [FromRoute] int groupID, [FromQuery] bool randomImages = false)
+        public ActionResult<List<Group>> GetFilteredSubGroups([FromRoute] int filterID, [FromRoute] int groupID, [FromQuery] bool randomImages = false, [FromQuery] bool includeMissing = false)
         {
             // Return sub-groups with no group filter applied.
             if (filterID == 0)
-                return GetSubGroups(groupID);
+                return GetSubGroups(groupID, randomImages, includeMissing);
 
             var groupFilter = RepoFactory.GroupFilter.GetByID(filterID);
             if (groupFilter == null)
@@ -114,8 +124,12 @@ namespace Shoko.Server.API.v3.Controllers
             if (group == null)
                 return NotFound(GroupController.GroupNotFound);
 
+            var user = User;
+            if (user.AllowedGroup(group))
+                return Forbid(GroupController.GroupForbiddenForUser);
+
             // Just return early because the every gropup will be filtered out.
-            if (!groupFilter.SeriesIds.TryGetValue(User.JMMUserID, out var seriesIDs))
+            if (!groupFilter.SeriesIds.TryGetValue(user.JMMUserID, out var seriesIDs))
                 return new List<Group>();
 
             return group.GetChildGroups()
@@ -124,7 +138,10 @@ namespace Shoko.Server.API.v3.Controllers
                     if (subGroup == null)
                         return false;
 
-                    if (User.AllowedGroup(subGroup))
+                    if (user.AllowedGroup(subGroup))
+                        return false;
+
+                    if (!includeMissing && !group.GetAllSeries().Any(s => s.GetAnimeEpisodes().Any(e => e.GetVideoLocals().Count > 0)))
                         return false;
 
                     if (groupFilter.ApplyToSeries != 1)
@@ -169,8 +186,12 @@ namespace Shoko.Server.API.v3.Controllers
             if (group == null)
                 return NotFound(GroupController.GroupNotFound);
 
+            var user = User;
+            if (user.AllowedGroup(group))
+                return Forbid(GroupController.GroupForbiddenForUser);
+
             // Just return early because the every series will be filtered out.
-            if (!groupFilter.SeriesIds.TryGetValue(User.JMMUserID, out var seriesIDs))
+            if (!groupFilter.SeriesIds.TryGetValue(user.JMMUserID, out var seriesIDs))
                 return new List<Series>();
 
             return (recursive ? group.GetAllSeries() : group.GetSeries())
@@ -189,17 +210,34 @@ namespace Shoko.Server.API.v3.Controllers
         /// </summary>
         /// <param name="groupID"></param>
         /// <param name="randomImages">Randomise images shown for the <see cref="Group"/>.</param>
+        /// <param name="includeMissing">Include <see cref="Series"/> with missing <see cref="Episode"/>s in the search.</param>
         /// <returns></returns>
         [HttpGet("Group/{groupID}/Group")]
-        public ActionResult<List<Group>> GetSubGroups([FromRoute] int groupID, [FromQuery] bool randomImages = false)
+        public ActionResult<List<Group>> GetSubGroups([FromRoute] int groupID, [FromQuery] bool randomImages = false, [FromQuery] bool includeMissing = false)
         {
             // Check if the group exists.
             var group = RepoFactory.AnimeGroup.GetByID(groupID);
             if (group == null)
                 return NotFound(GroupController.GroupNotFound);
 
+            var user = User;
+            if (user.AllowedGroup(group))
+                return Forbid(GroupController.GroupForbiddenForUser);
+
             return group.GetChildGroups()
-                .Where(group => User.AllowedGroup(group))
+                .Where(subGroup =>
+                {
+                    if (subGroup == null)
+                        return false;
+
+                    if (user.AllowedGroup(subGroup))
+                        return false;
+
+                    if (!includeMissing && !group.GetAllSeries().Any(s => s.GetAnimeEpisodes().Any(e => e.GetVideoLocals().Count > 0)))
+                        return false;
+
+                    return true;
+                })
                 .OrderByName()
                 .Select(group => new Group(HttpContext, group, randomImages))
                 .ToList();
@@ -225,8 +263,9 @@ namespace Shoko.Server.API.v3.Controllers
             if (group == null)
                 return NotFound(GroupController.GroupNotFound);
 
+            var user = User;
             return (recursive ? group.GetAllSeries() : group.GetSeries())
-                .Where(a => User.AllowedSeries(a))
+                .Where(a => user.AllowedSeries(a))
                 .OrderByAirDate()
                 .Select(series => new Series(HttpContext, series, randomImages))
                 .Where(series => series.Size > 0 || includeMissing)
