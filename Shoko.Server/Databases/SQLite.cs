@@ -22,7 +22,7 @@ namespace Shoko.Server.Databases
 
         public string Name { get; } = "SQLite";
 
-        public int RequiredVersion { get; } = 85;
+        public int RequiredVersion { get; } = 86;
 
 
         public void BackupDatabase(string fullfilename)
@@ -559,6 +559,9 @@ namespace Shoko.Server.Databases
             new DatabaseCommand(84, 1, "ALTER TABLE AnimeSeries_User ADD LastEpisodeUpdate timestamp DEFAULT NULL;"),
             new DatabaseCommand(84, 2, DatabaseFixes.FixWatchDates),
             new DatabaseCommand(85, 1, "ALTER TABLE AnimeGroup ADD MainAniDBAnimeID INT DEFAULT NULL;"),
+            new DatabaseCommand(86, 1, "ALTER TABLE AnimeEpisode_User DROP COLUMN ContractSize;"),
+            new DatabaseCommand(86, 2, "ALTER TABLE AnimeEpisode_User DROP COLUMN ContractBlob;"),
+            new DatabaseCommand(86, 3, "ALTER TABLE AnimeEpisode_User DROP COLUMN ContractVersion;"),
         };
 
         private static Tuple<bool, string> DropVideoLocal_Media(object connection)
@@ -628,6 +631,28 @@ namespace Shoko.Server.Databases
                 {
                     ((SQLite) DatabaseFactory.Instance).Execute(myConn, cmdTable);
                 }
+                return new Tuple<bool, string>(true, null);
+            }
+            catch (Exception e)
+            {
+                return new Tuple<bool, string>(false, e.ToString());
+            }
+        }
+        
+        private static Tuple<bool, string> DropAnimeEpisode_UserContracts(object connection)
+        {
+            
+            try
+            {
+                SQLiteConnection myConn = (SQLiteConnection) connection;
+                string createcommand =
+                    "CREATE TABLE AniDB_Anime ( AniDB_AnimeID INTEGER PRIMARY KEY AUTOINCREMENT, AnimeID int NOT NULL, EpisodeCount int NOT NULL, AirDate timestamp NULL, EndDate timestamp NULL, URL text NULL, Picname text NULL, BeginYear int NOT NULL, EndYear int NOT NULL, AnimeType int NOT NULL, MainTitle text NOT NULL, AllTitles text NOT NULL, AllTags text NOT NULL, Description text NOT NULL, EpisodeCountNormal int NOT NULL, EpisodeCountSpecial int NOT NULL, Rating int NOT NULL, VoteCount int NOT NULL, TempRating int NOT NULL, TempVoteCount int NOT NULL, AvgReviewRating int NOT NULL, ReviewCount int NOT NULL, DateTimeUpdated timestamp NOT NULL, DateTimeDescUpdated timestamp NOT NULL, ImageEnabled int NOT NULL, AwardList text NOT NULL, Restricted int NOT NULL, AnimePlanetID int NULL, ANNID int NULL, AllCinemaID int NULL, AnimeNfo int NULL, LatestEpisodeNumber int NULL, DisableExternalLinksFlag int NULL );";
+                List<string> indexcommands = new List<string>
+                {
+                    "CREATE UNIQUE INDEX [UIX2_AniDB_Anime_AnimeID] ON [AniDB_Anime] ([AnimeID]);"
+                };
+                ((SQLite) DatabaseFactory.Instance).DropColumns(myConn, "AniDB_Anime",
+                    new List<string> {"AllCategories"}, createcommand, indexcommands);
                 return new Tuple<bool, string>(true, null);
             }
             catch (Exception e)
