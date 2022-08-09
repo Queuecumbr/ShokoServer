@@ -6,6 +6,7 @@ using Shoko.Commons.Extensions;
 using Shoko.Commons.Properties;
 using Shoko.Models.Client;
 using Shoko.Models.Server;
+using Shoko.Plugin.Abstractions.DataModels;
 using Shoko.Server.Models;
 using Shoko.Server.Repositories.NHibernate;
 using Shoko.Server.Server;
@@ -174,9 +175,9 @@ namespace Shoko.Server.Repositories.Cached
             caep.StoppedCount = aeu.StoppedCount;
             caep.WatchedCount = aeu.WatchedCount;
             caep.WatchedDate = aeu.WatchedDate;
-            var englishTitle = RepoFactory.AniDB_Episode_Title.GetByEpisodeIDAndLanguage(ep.AniDB_EpisodeID, "EN")
+            var englishTitle = RepoFactory.AniDB_Episode_Title.GetByEpisodeIDAndLanguage(ep.AniDB_EpisodeID, TitleLanguage.English)
                 .FirstOrDefault()?.Title;
-            var romajiTitle = RepoFactory.AniDB_Episode_Title.GetByEpisodeIDAndLanguage(ep.AniDB_EpisodeID, "X-JAT")
+            var romajiTitle = RepoFactory.AniDB_Episode_Title.GetByEpisodeIDAndLanguage(ep.AniDB_EpisodeID, TitleLanguage.Romaji)
                 .FirstOrDefault()?.Title;
             caep.AniDB_EnglishName = englishTitle;
             caep.AniDB_RomajiName = romajiTitle;
