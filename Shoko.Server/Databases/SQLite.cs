@@ -573,6 +573,8 @@ namespace Shoko.Server.Databases
             new DatabaseCommand(84, 2, DatabaseFixes.FixWatchDates),
             new DatabaseCommand(85, 1, DropAniDB_FileColumns),
             new DatabaseCommand(85, 2, AlterAniDB_GroupStatus),
+            new DatabaseCommand(85, 3, "ALTER TABLE AniDB_Character DROP COLUMN CreatorListRaw;"),
+            new DatabaseCommand(85, 4, "ALTER TABLE AniDB_Anime_Character DROP COLUMN EpisodeListRaw;"),
         };
 
         private static Tuple<bool, string> AlterAniDB_GroupStatus(object connection)

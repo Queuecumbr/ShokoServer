@@ -621,6 +621,8 @@ namespace Shoko.Server.Databases
             new DatabaseCommand(90, 2, DropDefaultOnChaptered),
             new DatabaseCommand(90, 3, "ALTER TABLE AniDB_File Alter COLUMN IsCensored bit NULL; ALTER TABLE AniDB_File ALTER COLUMN IsDeprecated bit not null; ALTER TABLE AniDB_File ALTER COLUMN IsChaptered bit not null"),
             new DatabaseCommand(90, 4, "ALTER TABLE AniDB_GroupStatus Alter COLUMN Rating decimal(6,2) NULL; UPDATE AniDB_GroupStatus SET Rating = Rating / 100 WHERE Rating > 10"),
+            new DatabaseCommand(90, 5, "ALTER TABLE AniDB_Character DROP COLUMN CreatorListRaw;"),
+            new DatabaseCommand(90, 6, "ALTER TABLE AniDB_Anime_Character DROP COLUMN EpisodeListRaw;"),
         };
 
         private static Tuple<bool, string> DropDefaultOnChaptered(object connection)
