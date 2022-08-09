@@ -22,7 +22,7 @@ namespace Shoko.Server.Databases
 
         public string Name { get; } = "SQLite";
 
-        public int RequiredVersion { get; } = 85;
+        public int RequiredVersion { get; } = 86;
 
 
         public void BackupDatabase(string fullfilename)
@@ -575,6 +575,7 @@ namespace Shoko.Server.Databases
             new DatabaseCommand(85, 2, AlterAniDB_GroupStatus),
             new DatabaseCommand(85, 3, "ALTER TABLE AniDB_Character DROP COLUMN CreatorListRaw;"),
             new DatabaseCommand(85, 4, "ALTER TABLE AniDB_Anime_Character DROP COLUMN EpisodeListRaw;"),
+            new DatabaseCommand(86, 1, "ALTER TABLE AniDB_Anime DROP COLUMN AwardList;"),
         };
 
         private static Tuple<bool, string> AlterAniDB_GroupStatus(object connection)

@@ -26,7 +26,7 @@ namespace Shoko.Server.Databases
     public class SQLServer : BaseDatabase<SqlConnection>, IDatabase
     {
         public string Name { get; } = "SQLServer";
-        public int RequiredVersion { get; } = 90;
+        public int RequiredVersion { get; } = 91;
 
         public void BackupDatabase(string fullfilename)
         {
@@ -623,6 +623,7 @@ namespace Shoko.Server.Databases
             new DatabaseCommand(90, 4, "ALTER TABLE AniDB_GroupStatus Alter COLUMN Rating decimal(6,2) NULL; UPDATE AniDB_GroupStatus SET Rating = Rating / 100 WHERE Rating > 10"),
             new DatabaseCommand(90, 5, "ALTER TABLE AniDB_Character DROP COLUMN CreatorListRaw;"),
             new DatabaseCommand(90, 6, "ALTER TABLE AniDB_Anime_Character DROP COLUMN EpisodeListRaw;"),
+            new DatabaseCommand(91, 1, "ALTER TABLE AniDB_Anime DROP COLUMN AwardList;"),
         };
 
         private static Tuple<bool, string> DropDefaultOnChaptered(object connection)

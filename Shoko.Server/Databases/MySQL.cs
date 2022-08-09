@@ -20,7 +20,7 @@ namespace Shoko.Server.Databases
     public class MySQL : BaseDatabase<MySqlConnection>, IDatabase
     {
         public string Name { get; } = "MySQL";
-        public int RequiredVersion { get; } = 97;
+        public int RequiredVersion { get; } = 98;
 
 
         private List<DatabaseCommand> createVersionTable = new List<DatabaseCommand>
@@ -646,6 +646,7 @@ namespace Shoko.Server.Databases
             new DatabaseCommand(97, 3, "ALTER TABLE `AniDB_GroupStatus` MODIFY `Rating` decimal(6,2) NULL; UPDATE `AniDB_GroupStatus` SET `Rating` = `Rating` / 100 WHERE `Rating` > 10"),
             new DatabaseCommand(97, 4, "ALTER TABLE `AniDB_Character` DROP COLUMN CreatorListRaw;"),
             new DatabaseCommand(97, 5, "ALTER TABLE `AniDB_Anime_Character` DROP COLUMN EpisodeListRaw;"),
+            new DatabaseCommand(98, 1, "ALTER TABLE `AniDB_Anime` DROP COLUMN AwardList;"),
         };
 
         private DatabaseCommand linuxTableVersionsFix = new DatabaseCommand("RENAME TABLE versions TO Versions;");
