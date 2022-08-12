@@ -625,6 +625,7 @@ namespace Shoko.Server.Databases
             new DatabaseCommand(90, 5, "ALTER TABLE AniDB_Character DROP COLUMN CreatorListRaw;"),
             new DatabaseCommand(90, 6, "ALTER TABLE AniDB_Anime_Character DROP COLUMN EpisodeListRaw;"),
             new DatabaseCommand(91, 1, "ALTER TABLE AniDB_Anime DROP COLUMN AwardList;"),
+            new DatabaseCommand(91, 2, "ALTER TABLE AniDB_File DROP COLUMN AnimeID;"),
         };
 
         private static Tuple<bool, string> DropDefaultOnChaptered(object connection)
